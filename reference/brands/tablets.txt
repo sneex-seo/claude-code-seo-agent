@@ -1,0 +1,26 @@
+# Бренди планшетів (ніша: чохли й аксесуари для планшетів). Формат: Назва = regex-аліаси.
+# Зібрано rule-based кластеризацією + cluster_gaps на живому ядрі 29.07.2026. Межі слова обов'язкові.
+Apple iPad = \bipad\b|айпад|айпед
+Samsung Galaxy Tab = samsung|самсунг|galaxy tab|галакси таб|\btab a\d|\btab s\d|таб а\d|таб с\d
+Lenovo = lenovo|леново|\btab m\d|yoga tab|йога таб
+Huawei = huawei|хуавей|хуавэй|matepad|mediapad|honor pad
+Xiaomi = xiaomi|сяоми|ксиоми|\bmi pad\b|redmi pad|поко пад|poco pad|redmi\b
+Amazon Kindle = kindle|киндл|кіндл|amazon fire|fire hd
+Nokia = nokia|нокиа|нокіа
+Realme = realme|реалми|реалмі
+Oppo = oppo pad|оппо пад
+Teclast = teclast|теклст|текласт
+Pixus = pixus|піксус|пиксус
+Nomi = \bnomi\b|\bномі\b|\bноми\b
+Ergo = \bergo\b|\bерго\b|\bэрго\b
+Sigma = \bsigma\b|сігма|сигма
+Prestigio = prestigio|престіжіо|престижио
+Impression = impression|імпрешн|импрешн
+Bravis = bravis|бравіс|бравис
+Oscal = \boscal\b|оскал
+Blackview = blackview|блеквью|блэквью
+Asus = \basus\b|\bасус\b|zenpad|зенпад
+Sony = \bsony\b|\bсони\b|\bсоні\b|xperia|експері|эксперия
+Acer = \bacer\b|\bасер\b|iconia|іконія|икония
+Archos = \barchos\b|архос
+HTC = \bhtc\b

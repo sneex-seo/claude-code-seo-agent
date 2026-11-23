@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "serpstat": {
+      "command": "npx",
+      "args": ["-y", "@serpstat/serpstat-mcp-server"],
+      "env": {
+        "SERPSTAT_API_TOKEN": "ваш-токен-serpstat",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "en_US.UTF-8"
+      }
+    },
+    "dataforseo": {
+      "command": "npx",
+      "args": ["-y", "dataforseo-mcp-server"],
+      "env": {
+        "DATAFORSEO_USERNAME": "ваш-логін",
+        "DATAFORSEO_PASSWORD": "ваш-пароль"
+      }
+    }
+  }
+}

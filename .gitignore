@@ -1,0 +1,15 @@
+# Ключі та локальні налаштування
+.env
+.mcp.json
+.claude/settings.local.json
+
+# Дані клієнтів і результати
+clients/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
