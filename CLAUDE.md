@@ -20,10 +20,14 @@
 | Видимість і ключі домену | Serpstat | `python scripts/serpstat_api.py domain <домен>` / `domain-keywords` |
 | SERP-топ за ключем | Serpstat | `python scripts/serpstat_api.py top "<ключ>"` |
 | Живий SERP, обсяги поза UA | DataForSEO (оплата за запит, стеж за балансом і питай тімліда перед великими прогонами) | `python scripts/dataforseo_api.py serp / volume ...` або MCP `dataforseo` |
+| Перевірка сторінок видачею | DataForSEO (живий топ-10) або Serpstat (топ з бази) | `python scripts/serp_check.py ...` |
+| Друга думка про ключі | OpenAI (ChatGPT), оплата за токени | `python scripts/ai_review.py ...` |
 | Резерв | SerpApi (безкоштовний тариф - 250 запитів на місяць) | ключ у `.env` |
 | Вивантаження (Ahrefs, SE Ranking, GSC, Screaming Frog) | від тімліда | класти в `clients/<проєкт>/inbox/` |
 
 Ключі й доступи - у `.env` (у git не потрапляє). У результати, логи й відповіді ключі не вставляти.
+
+Платні прогони (DataForSEO, OpenAI) - лише після `--dry-run` і «ок» тімліда на кількість запитів і суму. Відповіді API кешуються в `cache/`, повтор безкоштовний.
 
 Ключа для потрібного API немає - скажи тімліду, що саме без нього не вийде, і запропонуй варіант на вивантаженнях (GSC, Ahrefs, Screaming Frog, Keyword Planner). Скіли gsc-quick-wins, toxic-links-audit, anchor-plan і tech-audit працюють на вивантаженнях без платних API.
 
@@ -38,7 +42,7 @@
 | Задача | Скіл |
 |---|---|
 | Новий клієнт, «заведи проєкт» | project-onboarding |
-| Семантика, кластеризація ключів | semantic-clustering |
+| Семантика, кластеризація ключів, структура сторінок | semantic-clustering |
 | Метатеги (Title / Description / H1) | meta-writer |
 | ТЗ копірайтеру на текст | content-brief |
 | SEO-текст | seo-text-writer |

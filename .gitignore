@@ -13,3 +13,6 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+
+# Кеш відповідей API
+cache/

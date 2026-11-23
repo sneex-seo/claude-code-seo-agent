@@ -1,0 +1,763 @@
+{
+ "name": "zaryadni-stantsii",
+ "category_name": "зарядні станції (портативні електростанції для дому)",
+ "base_name": "Зарядні станції",
+ "category_url": "/zaryadni-stantsii/",
+ "inputs": [
+  "inbox/*.csv"
+ ],
+ "minus_lists": [
+  "reference/minus_geo_market.txt"
+ ],
+ "info_extra": [
+  "схема",
+  "принцип",
+  "скільки",
+  "сколько",
+  "чим",
+  "чем",
+  "де",
+  "где",
+  "види",
+  "виды",
+  "топ",
+  "яку",
+  "какую",
+  "навіщо",
+  "зачем",
+  "це",
+  "саморобна",
+  "саморобні",
+  "саморобний",
+  "саморобну",
+  "самодельная",
+  "самодельные",
+  "самодельный",
+  "самодельную",
+  "підключення",
+  "підключити",
+  "подключение",
+  "подключить",
+  "дозвіл",
+  "мито",
+  "ампер",
+  "авр",
+  "заряджається",
+  "заряжается"
+ ],
+ "require_pattern": "заряд|станц|power|station|електр|электр|генер|акум|аккум|батаре|lifepo|\\bдбж\\b|\\bибп\\b|\\bups\\b|інвертор|инвертор|живлення|питания|zaryad|stan[ct]|портатив",
+ "layout_stems": "заряд|станц|електр|электр",
+ "thresholds": {
+  "min_keys": 3,
+  "min_volume": 50
+ },
+ "numeric_limits": [
+  {
+   "facet": "Потужність",
+   "max": 15000,
+   "reason": "інша категорія: промислові електростанції від 15 кВт"
+  }
+ ],
+ "topic_rules": [
+  {
+   "pattern": "^((станці[яюїйі]|станци[яюийї]|станціі)\\s*)+$",
+   "reason": "загальне слово без категорії"
+  },
+  {
+   "pattern": "^(купити |купить |куплю )?(заряд|зарядни|зарядную|зарядна стан|зарядная ста|станцию|станцію)$",
+   "reason": "обрізаний запит"
+  },
+  {
+   "pattern": "(?=.*(сонячн|солнечн|solar))(?=.*(електростанц|электростанц|power plant|power station))",
+   "unless": "заряд|портатив|portable|панел",
+   "reason": "суміжна категорія: сонячні електростанції"
+  },
+  {
+   "pattern": "(?=.*(електростанц|электростанц))(?=.*(дров|пелет|пеллет|твердом|твердому|паров|газов|газу|газе|бензин|дизел))",
+   "unless": "заряд|портатив",
+   "reason": "суміжна категорія: генератори"
+  },
+  {
+   "pattern": "(?=.*(електростанц|электростанц))(?=.*\\d\\s*(квт|кв\\b|kw))",
+   "unless": "заряд|портатив|акум|аккум|інверт|инверт|power|lifepo|для (дому|дома|квартир)",
+   "reason": "суміжна категорія: генератори"
+  },
+  {
+   "pattern": "(?=.*(електростанц|электростанц))(?=.*(гібридн|гибридн|атмосфер|хвильов|волнов|монтаж|фотограф|діаграм|диаграм|світу|мира|перш|\\bгрес\\b|\\bфес\\b|\\bдрес\\b|районн|тепло\\b|зміїв|змиев|дніпровськ|днепровск|криворізьк|криворожск|добротвірськ|добротворск|стрий|продам))",
+   "unless": "заряд|портатив",
+   "reason": "інша тема: електростанції в енергетиці"
+  },
+  {
+   "pattern": "(?=.*(електростанц|электростанц))(?=.*(судн|чинник|умовн|позначен|шкод|криоген|номер телефон|будущ|майбутн|каширск|эстони|естоні|франци|сварочн|зварювальн|кипор|перкинс|\\bдиз\\b|\\bаб\\s?\\d|литв|сша|канад|японск|волг|нарвск|шатур|ашалим|хадер|ниагар|баттерси|плавуч|вихрев|магнитн|бестопливн|взрыв|майнкрафт|церкв|макет|проект|турбин|двигател|карбюратор|реферат|википед|вікіпед|кпд|установленн|токмак|аувере|грэс|івано|франківськ|канівськ|мотоблок|опилк|щеп|биомасс|біомас|гелио|геліо|под ключ|сетев|мережев|стационарн|стаціонарн|армейск))",
+   "unless": "заряд|портатив",
+   "reason": "інша тема: електростанції в енергетиці"
+  },
+  {
+   "pattern": "\\bcoal\\b|fossil|nuclear|thermal|lyrics|we fight|worker|diagram|\\bart\\b|equipment|lethabo|matla|management|\\bgroup\\b|conventional|ieee|atomos|aputure|ifi audio|bongiovi|\\d+\\s?mah\\b",
+   "reason": "інша тема: інші «power station»"
+  },
+  {
+   "pattern": "шуруповерт|шуруповёрт|дрил|deppa|3 в 1|remax|alcatel|huawei|pitaka|юсб|углекислот",
+   "reason": "інша категорія: зарядки для гаджетів і акумуляторів"
+  },
+  {
+   "pattern": "мерседес|mercedes|автоэнтерпрайз|установк\\w* зарядн|встановлен\\w* зарядн",
+   "reason": "інша категорія: зарядки для електромобілів"
+  },
+  {
+   "pattern": "(польщ|польш|чехі|чехи|європ|европ|німеччин|германи)",
+   "reason": "гео: купівля в іншій країні"
+  },
+  {
+   "pattern": "\\byasno\\b|\\bясно\\b|екодрайв|ecodrive|е каталог",
+   "reason": "навігаційний: інша компанія або магазин"
+  },
+  {
+   "pattern": "blue yeti",
+   "reason": "інший товар: мікрофон Blue Yeti"
+  },
+  {
+   "pattern": "\\b(ибп|дбж|безперебійник|бесперебойник)\\b",
+   "unless": "заряд|станц|power",
+   "reason": "суміжна категорія: ДБЖ"
+  },
+  {
+   "pattern": "ломбард|манікюр|маникюр|стилус|розіграш|розыгрыш|нова пошта|новая почта|інвестиц|инвестиц|телевизор|телевізор|колонк",
+   "unless": "станц",
+   "reason": "інша тема"
+  },
+  {
+   "pattern": "(електростанц|электростанц).*(передвижн|пересувн|контейнер|промислов|промышлен|военн|військов|гібридн|гибридн|автоматизир|резервн\\w* (електро|электро))",
+   "unless": "заряд|портатив|акум|аккум|інверт|инверт|power",
+   "reason": "суміжна категорія: генератори"
+  },
+  {
+   "pattern": "(електростанц|электростанц).*(україн|украин|карт|\\bтип|вид|найбільш|крупнейш|област|районн|ядерн|газотурбін|газотурбин|припливн|\\b[свпр]ес\\b|дрес|вітряк|вугільн|угольн|водян|гідравл|гидравл|судн|ветрен|наливайк|закарпат|\\bце\\b|історі|истори)|(україн|украин|карт|\\bтип|вид|найбільш|крупнейш|ядерн|газотурбін|газотурбин|припливн|вітряк|вугільн|угольн|водян|ветрен|наливайк).*(електростанц|электростанц)",
+   "unless": "заряд|портатив|акум|аккум|інверт|инверт|power|купи|купл|ціна|цена|для",
+   "reason": "інша тема: електростанції в енергетиці"
+  },
+  {
+   "pattern": "\\busb\\b",
+   "unless": "power station|портатив|\\bwh\\b|\\bвт\\b|квт",
+   "reason": "інша категорія: зарядки для гаджетів і акумуляторів"
+  },
+  {
+   "pattern": "атомн|аес\\b|аэс\\b|\\bтес\\b|\\bтэс\\b|\\bгес\\b|\\bгэс\\b|\\bтец\\b|\\bтэц\\b|теплов|гідро|гидро|вітров|ветров|вітроелектр|ветроэлектр|запорізьк|запорожск|рівненськ|ровенск|хмельницьк|хмельницк|південноукраїнськ|южноукраинск|бурштин|чорнобил|чернобыл|трипільськ|трипольск|ладижинськ|ладыжинск|вуглегірськ|углегорск|курахівськ|кураховск|nuclear|atomic|hydro|thermal|battersea|приливн|геотерм|біогаз|биогаз|енергоблок|энергоблок|реактор|ветрян|вітрян|газопоршнев|когенерац|\\bмвт\\b|мегават",
+   "reason": "інша тема: електростанції в енергетиці"
+  },
+  {
+   "pattern": "(електростанц|электростанц).*\\b(honda|hyundai|fubag|champion|huter|matari|rato|loncin|kipor|sdmo|geko|vulkan|forte|briggs|yamaha|caterpillar|катерпиллер|cummins|firman|fg wilson|yanmar|янмар|aksa|jcb|elitech|eisemann|кентавр|lifan|тсс|дгу|fogo|форте|фубаг|хонда|ямаха|хюндай)\\b|\\b(honda|hyundai|fubag|champion|huter|matari|rato|loncin|kipor|sdmo|geko|vulkan|forte|briggs|yamaha|caterpillar|катерпиллер|cummins|firman|fg wilson|yanmar|янмар|aksa|jcb|elitech|eisemann|кентавр|lifan|тсс|дгу|fogo|форте|фубаг|хонда|ямаха|хюндай)\\b.*(електростанц|электростанц)",
+   "reason": "суміжна категорія: генератори"
+  },
+  {
+   "pattern": "бездрот|беспровод|безпровід|безпровод|wireless|magsafe|\\bapple\\b|iphone|айфон|airpods|самсунг|samsung|гаджет|док[\\s-]?станц|\\bdock\\b|xbox|dualsense|dualshock|джойстик|геймпад|контролер|контроллер|\\bмыш|\\bмиш|\\bепл\\b|\\bэпл\\b|\\bпс\\s?5\\b|\\bps\\s?5\\b|дуалсенс|\\bакб\\b|настільн|настольн|вуличн|уличн|годинник|часов|навушник|наушник|станці\\w* для зарядки телефон|станци\\w* для зарядки телефон",
+   "reason": "інша категорія: зарядки для гаджетів і акумуляторів"
+  },
+  {
+   "pattern": "для (акумулятор|аккумулятор|батарей)",
+   "unless": "додатков|дополнительн",
+   "reason": "інша категорія: зарядки для гаджетів і акумуляторів"
+  },
+  {
+   "pattern": "повербанк|павербанк|power\\s?bank",
+   "reason": "суміжна категорія: павербанки"
+  },
+  {
+   "pattern": "електромоб|электромоб|електрокар|электрокар|ionity|tesla|тесла|electric car|\\bev\\b|автомобіл|автомобил|\\bавто\\b|машин|chademo|ccs|type 2|wallbox|велосипед|самокат|карта заряд|зарядк\\w* станці\\w* для|автозаправ|азс\\b|\\bгаз\\w* заправ|електрозаправ|электрозаправ|type\\s?1|\\bмап\\w*|мереж\\w* зарядн|сеть зарядн|безкоштовн\\w* зарядн|бесплатн\\w* зарядн|електрозарядн|электрозарядн",
+   "reason": "інша категорія: зарядки для електромобілів"
+  },
+  {
+   "pattern": "дизел|бензин|газов\\w* (генератор|електростанц|электростанц)|генератор|generac|scheppach",
+   "unless": "заряд|акум|аккум|батаре",
+   "reason": "суміжна категорія: генератори"
+  },
+  {
+   "pattern": "радіостанц|радиостанц|метеостанц|док-?станц|docking|playstation|\\bps\\d|космічн|космическ|орбітальн|орбитальн|залізнич|железнодор|вокзал|пожежн|пожарн|насосн|компресорн|компрессорн|підстанц|подстанц|трансформатор|паяльн|ремонтн",
+   "reason": "інша тема: інші «станції»"
+  },
+  {
+   "pattern": "оренд|аренд|прокат|сервісн|сервисн|гаранті|гаранти",
+   "reason": "послуга, а не товар категорії"
+  }
+ ],
+ "comments": [
+  {
+   "pattern": "^(електростанці\\w*|электростанци\\w*)$",
+   "comment": "спірний: видача змішана (енергетика і товар), уточнити в тімліда"
+  }
+ ],
+ "ai_dismiss": [
+  {
+   "problem": "інформаційний",
+   "pattern": "ціна|цена|ціни|цены|недорог|дешев|розстроч|рассроч|частинами|купи|купл|виробництва|производства|оптом"
+  },
+  {
+   "problem": "незрозумілий",
+   "pattern": "світл|света|паверстанц|повер станц|резервного живлення|для дома|для зарядки"
+  },
+  {
+   "problem": "не про товар",
+   "pattern": "для (зсу|военн|військов|бойлер)|трехфазн|трифазн|без акумулятор|станці\\w* для зарядки|портативн\\w* зарядн"
+  }
+ ],
+ "intent_rules": [
+  {
+   "pattern": "офіційн|официальн|official",
+   "intent": "навігаційний"
+  }
+ ],
+ "aliases": {
+  "дельт\\w*": "delta",
+  "рівер|ривер": "river",
+  "експлорер|эксплорер": "explorer",
+  "солікс|соликс": "solix",
+  "\\baf\\s*p\\s*(\\d)": "p\\1",
+  "\\bмакс\\b": "max",
+  "\\bплюс\\b": "plus",
+  "\\bпро\\b": "pro",
+  "\\bміні\\b|\\bмини\\b": "mini",
+  "\\bультра\\b": "ultra"
+ },
+ "brands": [
+  {
+   "name": "EcoFlow",
+   "slug": "ecoflow",
+   "pattern": "eco\\s?flow|еко\\s?фло\\w*|эко\\s?фло\\w*|екофлов|экофлов|\\bdelta\\b|дельт|\\briver\\b|рівер|ривер",
+   "models": [
+    "\\b(delta|river|trail|wave)\\s*(pro\\s*3|pro\\s*ultra|\\d+(\\s*(max|plus|pro|ultra|mini|air))*|pro|max|mini|plus|air|ultra)\\b"
+   ],
+   "series": [
+    {
+     "name": "Delta",
+     "slug": "delta",
+     "pattern": "\\bdelta\\b"
+    },
+    {
+     "name": "River",
+     "slug": "river",
+     "pattern": "\\briver\\b"
+    },
+    {
+     "name": "Trail",
+     "slug": "trail",
+     "pattern": "\\btrail\\b"
+    },
+    {
+     "name": "Wave",
+     "slug": "wave",
+     "pattern": "\\bwave\\b"
+    }
+   ]
+  },
+  {
+   "name": "Bluetti",
+   "slug": "bluetti",
+   "pattern": "bluett?i|bluety|блюет+\\w*|блует+\\w*|блют+і|блуті|блюті",
+   "models": [
+    "\\b(ac|eb|ap|el)\\s*\\d{1,3}[a-z]?\\b(\\s*(pro|max|plus))?",
+    "\\belite\\s*\\d{2,3}(\\s*v2)?\\b",
+    "\\bhandsfree\\s*\\d\\b"
+   ],
+   "series": [
+    {
+     "name": "AC",
+     "slug": "ac",
+     "pattern": "\\bac\\b"
+    },
+    {
+     "name": "EB",
+     "slug": "eb",
+     "pattern": "\\beb\\b"
+    },
+    {
+     "name": "Elite",
+     "slug": "elite",
+     "pattern": "\\belite\\b"
+    }
+   ]
+  },
+  {
+   "name": "Anker",
+   "slug": "anker",
+   "pattern": "\\banker\\b|\\bанкер\\w*|solix",
+   "models": [
+    "\\bsolix\\s*[a-z]?\\s*\\d{3,4}\\b",
+    "\\b[fc]\\s*\\d{3,4}\\b",
+    "\\b(521|535|548|555|757|767)\\b"
+   ]
+  },
+  {
+   "name": "Jackery",
+   "slug": "jackery",
+   "pattern": "jacker[yi]|jackary|джекер\\w*",
+   "models": [
+    "\\bexplorer\\s*\\d{3,4}(\\s*(plus|pro|v2))?",
+    "\\be\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "Oukitel",
+   "slug": "oukitel",
+   "pattern": "oukitel|оукітел|оукител|укител|укітел",
+   "models": [
+    "\\b(p|bp|cn|abc)\\s*\\d{3,4}[a-z]?\\b(\\s*(plus|pro))?"
+   ]
+  },
+  {
+   "name": "Allpowers",
+   "slug": "allpowers",
+   "pattern": "all\\s?powers|олпаверс",
+   "models": [
+    "\\b(s|r)\\s*\\d{3,4}\\b(\\s*(plus|pro))?"
+   ]
+  },
+  {
+   "name": "Fossibot",
+   "slug": "fossibot",
+   "pattern": "fos+ibot|фос+ібот|фос+ибот",
+   "models": [
+    "\\bf\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "Pecron",
+   "slug": "pecron",
+   "pattern": "pecron|пекрон",
+   "models": [
+    "\\b(e|f)\\s*\\d{3,4}[a-z]*\\b"
+   ]
+  },
+  {
+   "name": "Flashfish",
+   "slug": "flashfish",
+   "pattern": "flash\\s?fish|флешфіш|флешфиш"
+  },
+  {
+   "name": "PowerOak",
+   "slug": "poweroak",
+   "pattern": "power\\s?oak"
+  },
+  {
+   "name": "Marstek",
+   "slug": "marstek",
+   "pattern": "marstek|марстек"
+  },
+  {
+   "name": "Choetech",
+   "slug": "choetech",
+   "pattern": "choetech",
+   "models": [
+    "\\bbs\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "DJI",
+   "slug": "dji",
+   "pattern": "\\bdji\\b",
+   "models": [
+    "\\bpower\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "Ugreen",
+   "slug": "ugreen",
+   "pattern": "ugreen"
+  },
+  {
+   "name": "Zendure",
+   "slug": "zendure",
+   "pattern": "zendure",
+   "models": [
+    "\\bsuperbase\\s*(pro|v)?\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "Xiaomi",
+   "slug": "xiaomi",
+   "pattern": "xiaomi|сяом[иі]|ксиаоми"
+  },
+  {
+   "name": "Baseus",
+   "slug": "baseus",
+   "pattern": "baseus"
+  },
+  {
+   "name": "Dnipro-M",
+   "slug": "dnipro-m",
+   "pattern": "dnipro[\\s-]?m\\b|дніпро[\\s-]?м\\b|днипро[\\s-]?м\\b|днепр[\\s-]?м\\b"
+  },
+  {
+   "name": "Konner&Sohnen",
+   "slug": "konner-sohnen",
+   "pattern": "konner"
+  },
+  {
+   "name": "Vitals",
+   "slug": "vitals",
+   "pattern": "\\bvitals\\b|віталс|виталс"
+  },
+  {
+   "name": "Goal Zero",
+   "slug": "goal-zero",
+   "pattern": "goal\\s?zero|(?<!blue )\\byeti\\b",
+   "models": [
+    "\\byeti\\s*\\d{3,4}x?\\b"
+   ]
+  },
+  {
+   "name": "Zegor",
+   "slug": "zegor",
+   "pattern": "\\bzegor\\b|\\bзегор\\b"
+  },
+  {
+   "name": "Energizer",
+   "slug": "energizer",
+   "pattern": "energizer"
+  },
+  {
+   "name": "Yaber",
+   "slug": "yaber",
+   "pattern": "\\byaber\\b"
+  },
+  {
+   "name": "Tecsun",
+   "slug": "tecsun",
+   "pattern": "tecsun"
+  },
+  {
+   "name": "Itel",
+   "slug": "itel",
+   "pattern": "\\bitel\\b"
+  },
+  {
+   "name": "Kepworth",
+   "slug": "kepworth",
+   "pattern": "kepworth"
+  },
+  {
+   "name": "Ampace",
+   "slug": "ampace",
+   "pattern": "ampace"
+  },
+  {
+   "name": "Vtoman",
+   "slug": "vtoman",
+   "pattern": "vtoman"
+  },
+  {
+   "name": "Togo Power",
+   "slug": "togo-power",
+   "pattern": "togo\\s?power"
+  },
+  {
+   "name": "Romoss",
+   "slug": "romoss",
+   "pattern": "romoss"
+  },
+  {
+   "name": "Powerness",
+   "slug": "powerness",
+   "pattern": "powerness"
+  },
+  {
+   "name": "Duxx",
+   "slug": "duxx",
+   "pattern": "\\bduxx\\b"
+  },
+  {
+   "name": "TIG Fox",
+   "slug": "tig-fox",
+   "pattern": "tig\\s?fox|тіг\\s?фокс|тиг\\s?фокс",
+   "models": [
+    "\\bt\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "MUST",
+   "slug": "must",
+   "pattern": "\\bmust\\b|\\bмаст\\b",
+   "models": [
+    "\\bem\\s*\\d{3,4}[a-z]*\\b"
+   ]
+  },
+  {
+   "name": "Abok",
+   "slug": "abok",
+   "pattern": "\\babok\\b|\\bабок\\b"
+  },
+  {
+   "name": "Segway",
+   "slug": "segway",
+   "pattern": "segway|сегвей",
+   "models": [
+    "\\bcube\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "Aferiy",
+   "slug": "aferiy",
+   "pattern": "aferiy",
+   "models": [
+    "\\b(af\\s*)?p\\s*\\d{3}\\b"
+   ]
+  },
+  {
+   "name": "Ctechi",
+   "slug": "ctechi",
+   "pattern": "ctechi",
+   "models": [
+    "\\b(st|gt)\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "Oscal",
+   "slug": "oscal",
+   "pattern": "oscal|оскал",
+   "models": [
+    "\\bpowermax\\s*\\d{3,4}(\\s*(se|pe))?\\b"
+   ]
+  },
+  {
+   "name": "Xtorm",
+   "slug": "xtorm",
+   "pattern": "xtorm",
+   "models": [
+    "\\bxp\\s*\\d{3}u?\\b"
+   ]
+  },
+  {
+   "name": "Hoco",
+   "slug": "hoco",
+   "pattern": "\\bhoco\\b|\\bхоко\\b",
+   "models": [
+    "\\bdb\\s*\\d{2,3}\\b"
+   ]
+  },
+  {
+   "name": "Genergy",
+   "slug": "genergy",
+   "pattern": "genergy"
+  },
+  {
+   "name": "Growatt",
+   "slug": "growatt",
+   "pattern": "growatt",
+   "models": [
+    "\\binfinity\\s*\\d{3,4}\\b"
+   ]
+  },
+  {
+   "name": "Revolt",
+   "slug": "revolt",
+   "pattern": "\\brevolt\\b",
+   "models": [
+    "\\bhsg\\s*\\d{3}\\b"
+   ]
+  },
+  {
+   "name": "Makita",
+   "slug": "makita",
+   "pattern": "makita|макіта|макита"
+  },
+  {
+   "name": "Flash",
+   "slug": "flash",
+   "pattern": "\\bflash\\b(?!\\s?fish)"
+  },
+  {
+   "name": "Ieetek",
+   "slug": "ieetek",
+   "pattern": "ieetek"
+  },
+  {
+   "name": "Ecoplay",
+   "slug": "ecoplay",
+   "pattern": "ecoplay"
+  },
+  {
+   "name": "Ctolity",
+   "slug": "ctolity",
+   "pattern": "ctolity"
+  },
+  {
+   "name": "Marsriva",
+   "slug": "marsriva",
+   "pattern": "marsriva"
+  },
+  {
+   "name": "Intertool",
+   "slug": "intertool",
+   "pattern": "intertool|інтертул|интертул"
+  },
+  {
+   "name": "AgfaPhoto",
+   "slug": "agfaphoto",
+   "pattern": "agfa"
+  },
+  {
+   "name": "Enersol",
+   "slug": "enersol",
+   "pattern": "enersol"
+  },
+  {
+   "name": "Nitecore",
+   "slug": "nitecore",
+   "pattern": "nitecore"
+  },
+  {
+   "name": "Beaudens",
+   "slug": "beaudens",
+   "pattern": "beaudens"
+  },
+  {
+   "name": "Novoo",
+   "slug": "novoo",
+   "pattern": "novoo"
+  }
+ ],
+ "numeric": [
+  {
+   "name": "Потужність",
+   "unit": "W",
+   "with_brand": true,
+   "patterns": [
+    {
+     "regex": "(\\d+(?:[.,]\\d+)?)\\s*(?:квт|kw|кв)\\b(?!\\s*(?:год|ч|h|\\*|·))",
+     "mult": 1000
+    },
+    {
+     "regex": "(\\d{3,4})\\s*(?:вт|w|ват+|watt)\\b(?!\\s*(?:год|ч|h|\\*|·))",
+     "mult": 1
+    }
+   ]
+  },
+  {
+   "name": "Ємність",
+   "unit": "Wh",
+   "with_brand": false,
+   "patterns": [
+    {
+     "regex": "(\\d{3,5})\\s*(?:wh|вт\\s*[·*]?\\s*год|вт\\s*[·*]?\\s*ч|втч)\\b",
+     "mult": 1
+    },
+    {
+     "regex": "(\\d+(?:[.,]\\d+)?)\\s*(?:kwh|квт\\s*[·*]?\\s*год|квт\\s*[·*]?\\s*ч)\\b",
+     "mult": 1000
+    }
+   ]
+  }
+ ],
+ "attributes": [
+  {
+   "name": "Призначення",
+   "values": [
+    {
+     "name": "Для котла",
+     "slug": "dlya-kotla",
+     "pattern": "котл|опаленн|отоплени"
+    },
+    {
+     "name": "Для холодильника",
+     "slug": "dlya-kholodylnyka",
+     "pattern": "холодильник"
+    },
+    {
+     "name": "Для кемпінгу і туризму",
+     "slug": "dlya-kempinhu",
+     "pattern": "кемпінг|кемпинг|туризм|туристи|похід|поход|риболов|рыбалк|camping|outdoor|природ"
+    },
+    {
+     "name": "Для ноутбука, телефону і роутера",
+     "slug": "dlya-noutbuka",
+     "pattern": "ноутбук|телефон|смартфон|роутер|комп.?ютер|компьютер|\\bпк\\b|телевізор|телевизор"
+    },
+    {
+     "name": "Для квартири",
+     "slug": "dlya-kvartyry",
+     "pattern": "квартир"
+    },
+    {
+     "name": "Для дому",
+     "slug": "dlya-domu",
+     "pattern": "для (дому|дома|будинку|дачі|дачи|приватн\\w* будинку|частн\\w* дома|домашн\\w*|дом\\b)|домашн|для оселі"
+    }
+   ]
+  },
+  {
+   "name": "Тип",
+   "values": [
+    {
+     "name": "Сонячні панелі для станцій",
+     "slug": "sonyachni-paneli",
+     "override": true,
+     "pattern": "(сонячн|солнечн|solar)\\w*\\s+(панел|батаре)\\w*.*\\b(для|до|под|під)\\b|(^|\\s)(панел)\\w* (для|до) заряд|solar panel"
+    },
+    {
+     "name": "Додаткові батареї",
+     "slug": "dodatkovi-batarei",
+     "override": true,
+     "pattern": "(додатков|дополнительн|extra)\\w*\\s+(батаре|акумулятор|аккумулятор|battery)|(акумулятор|аккумулятор|батаре)\\w*\\s+(для|до)\\s+(заряд|станц|електростанц|электростанц)"
+    },
+    {
+     "name": "Аксесуари",
+     "slug": "aksesuary",
+     "override": true,
+     "pattern": "адаптер|кабел|\\bсумк|чохол|чехол|\\bкейс|аксесуар|аксессуар|перехідник|переходник|щит|перемикач|переключател|стійк|стойк|підставк|подставк|корпус|стабіліз|стабилиз|блок (питания|живлення)|зарядк\\w* для заряд|інвертор для|инвертор для"
+    },
+    {
+     "name": "З функцією ДБЖ (UPS)",
+     "slug": "z-funktsiyeyu-dbzh",
+     "pattern": "\\bups\\b|\\bдбж\\b|\\bибп\\b|безперебійн|бесперебойн"
+    },
+    {
+     "name": "З сонячною панеллю",
+     "slug": "z-sonyachnoyu-panellyu",
+     "pattern": "сонячн|солнечн|solar|панел"
+    },
+    {
+     "name": "LiFePO4",
+     "slug": "lifepo4",
+     "pattern": "lifepo|\\blfp\\b|літій[\\s-]?залізо|литий[\\s-]?железо|залізо[\\s-]?фосфат|железо[\\s-]?фосфат"
+    },
+    {
+     "name": "Міні",
+     "slug": "mini",
+     "pattern": "\\bміні\\b|\\bмини\\b|\\bmini\\b|маленьк|компактн"
+    },
+    {
+     "name": "З чистою синусоїдою",
+     "slug": "chysta-synusoyida",
+     "pattern": "синус|sine"
+    }
+   ]
+  },
+  {
+   "name": "Ціна",
+   "values": [
+    {
+     "name": "Недорогі",
+     "slug": "nedorogi",
+     "pattern": "недорог|дешев|бюджетн"
+    }
+   ]
+  }
+ ],
+ "combos": [
+  [
+   "Призначення",
+   "Потужність"
+  ],
+  [
+   "Тип",
+   "Потужність"
+  ],
+  [
+   "Призначення",
+   "Ємність"
+  ],
+  [
+   "Призначення",
+   "Тип"
+  ]
+ ]
+}
