@@ -86,6 +86,8 @@ def model_label(text):
     t = re.sub(r'\s+', ' ', text.strip())
     # «ac 180» -> «ac180»; «delta 2» і «pro 3» лишаються окремими словами
     t = re.sub(r'\b([a-z]{1,3})\s+(\d)', lambda m: m.group(0) if m.group(1) in MODEL_WORDS else m.group(1) + m.group(2), t)
+    # «ac200max» = «ac200 max»: суфікс-слово після коду моделі відділяємо, «ac200pl» і «ac180p» не чіпаємо
+    t = re.sub(r'\b([a-z]+\d+[a-z]?)(max|pro|plus)\b', r'\1 \2', t)
     words = t.split()
     label = ' '.join(w.upper() if re.search(r'\d', w) else w.capitalize() for w in words)
     slug = '-'.join(re.sub(r'[^a-z0-9а-яіїєґ]+', '', w) for w in words)
@@ -319,7 +321,9 @@ def ai_status(cfg, res, ai_rows):
     out = {'applied': 0, 'dismissed': 0, 'flagged': {}}
     for r in ai_rows:
         k, prob = r['Keyword'], r['Проблема']
-        if k not in res['kept'] or res['page_of'].get(k) != r['Сторінка']:
+        # враховано: ключ видалено або в інфо; для «інша сторінка» - ключ переїхав. Інші переїзди (перейменування
+        # сторінки, модель замість бренду) знахідку не закривають.
+        if k not in res['kept'] or (prob == 'інша сторінка' and res['page_of'].get(k) != r['Сторінка']):
             out['applied'] += 1
             continue
         dismiss = (prob == 'інша сторінка' and not r.get('Пропозиція')) or                   (prob == 'не про товар' and any(b.search(k) for b in brands)) or                   any(d['problem'] == prob and d['_rx'].search(k) for d in cfg.get('ai_dismiss', []))

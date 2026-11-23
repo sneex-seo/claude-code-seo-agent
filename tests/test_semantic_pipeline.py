@@ -74,6 +74,10 @@ def test_model_label_keeps_words_apart():
     assert sc.model_label('delta pro 3')[0] == 'Delta Pro 3'
     assert sc.model_label('ac 180p')[0] == 'AC180P'
     assert sc.model_label('elite 100 v2')[1] == 'elite-100-v2'
+    assert sc.model_label('ac200 max') == sc.model_label('ac200max') == ('AC200 Max', 'ac200-max')
+    assert sc.model_label('p2001e plus')[0] == 'P2001E Plus'
+    assert sc.model_label('ac200pl')[0] == 'AC200PL'
+    assert sc.model_label('delta 2 max')[0] == 'Delta 2 Max'
 
 
 def test_pages_respect_thresholds_and_balance(tmp_path):
