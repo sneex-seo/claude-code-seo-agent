@@ -114,6 +114,7 @@ def test_cluster_gaps_finds_brand_in_base(tmp_path):
 
 @pytest.mark.parametrize('script', ['serpstat_api.py', 'dataforseo_api.py', 'gsc_analyze.py',
                                     'link_risk.py', 'anchor_plan.py', 'coverage_check.py',
-                                    'variant_dedupe.py', 'cluster_gaps.py'])
+                                    'variant_dedupe.py', 'cluster_gaps.py', 'competitors.py',
+                                    'article_examples.py', 'semantic_core.py', 'serp_check.py'])
 def test_help_works_without_keys(script):
     assert 'usage' in run(script, '--help')

@@ -20,7 +20,9 @@
 | Видимість і ключі домену | Serpstat | `python scripts/serpstat_api.py domain <домен>` / `domain-keywords` |
 | SERP-топ за ключем | Serpstat | `python scripts/serpstat_api.py top "<ключ>"` |
 | Живий SERP, обсяги поза UA | DataForSEO (оплата за запит, стеж за балансом і питай тімліда перед великими прогонами) | `python scripts/dataforseo_api.py serp / volume ...` або MCP `dataforseo` |
-| Перевірка сторінок видачею | DataForSEO (живий топ-10) або Serpstat (топ з бази) | `python scripts/serp_check.py ...` |
+| Структура конкурентів: фільтри, що ранжуються | Serpstat + HTML категорій | `python scripts/competitors.py <config.json>` |
+| Перевірка сторінок видачею, тип видачі | DataForSEO (живий топ-10) або Serpstat (топ з бази) | `python scripts/serp_check.py ...` |
+| Теми статей: що у видачі, приклади статей конкурентів | ті самі джерела видачі | `python scripts/article_examples.py ...` |
 | Друга думка про ключі | OpenAI (ChatGPT), оплата за токени | `python scripts/ai_review.py ...` |
 | Резерв | SerpApi (безкоштовний тариф - 250 запитів на місяць) | ключ у `.env` |
 | Вивантаження (Ahrefs, SE Ranking, GSC, Screaming Frog) | від тімліда | класти в `clients/<проєкт>/inbox/` |
@@ -42,7 +44,7 @@
 | Задача | Скіл |
 |---|---|
 | Новий клієнт, «заведи проєкт» | project-onboarding |
-| Семантика, кластеризація ключів, структура сторінок | semantic-clustering |
+| Семантика, кластеризація ключів, структура сторінок за рівнями, теми статей | semantic-clustering |
 | Метатеги (Title / Description / H1) | meta-writer |
 | ТЗ копірайтеру на текст | content-brief |
 | SEO-текст | seo-text-writer |

@@ -30,6 +30,7 @@ import requests
 sys.stdout.reconfigure(encoding='utf-8')
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from serpstat_api import env  # noqa: E402
+from page_types import serp_profile  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, 'cache', 'serp')
@@ -209,8 +210,9 @@ def main():
         if a is None or b is None:
             break
         decision, why, overlap, spec = decide(a, b, refinement_tokens(p, parent), args.same, args.spec)
+        profile, rec = serp_profile(a) if a else ({}, '')
         result[p['page']] = {'head': pk, 'parent': parent['page'], 'parent_head': qk, 'overlap': overlap,
-                             'specific': spec, 'decision': decision, 'why': why,
+                             'specific': spec, 'decision': decision, 'why': why, 'profile': profile, 'recommendation': rec,
                              'top': [it['url'] for it in a], 'parent_top': [it['url'] for it in b]}
     out = args.out or os.path.join(os.path.dirname(os.path.abspath(args.pages)), 'serp_check.json')
     json.dump({'source': args.source, 'same': args.same, 'spec': args.spec, 'date': date.today().isoformat(),

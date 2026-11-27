@@ -25,6 +25,8 @@ KEYS = [
     ('кавомашина з капучинатором', 800), ('кавомашина з капучинатором для дому', 150), ('кавомашина з капучинатором недорого', 90),
     ('як вибрати кавомашину', 700), ('ремонт кавомашини', 500), ('кавомашина київ', 400),
     ('кавомашина для дому з капучинатором', 120),
+    ('як вибрати кавомашину delonghi', 200), ('як чистити кавомашину', 250), ('як чистити кавомашину delonghi', 120),
+    ('скільки коштує кавомашина', 300),
 ]
 
 
@@ -53,6 +55,11 @@ def make_niche(tmp_path):
             {'name': 'Тип', 'values': [{'name': 'З капучинатором', 'slug': 'z-kapuchynatorom', 'pattern': r'капучинатор'}]},
         ],
         'combos': [['Призначення', 'Тип']],
+        'commercial_override': r'скільки коштує',
+        'articles': {
+            'topics': [{'name': 'Як вибрати кавомашину', 'pattern': r'вибрати|вибір'},
+                       {'name': 'Догляд', 'slug': 'doglyad', 'pattern': r'чистити|чистка|декальцин'}],
+            'split_by': ['Бренд'], 'thresholds': {'min_keys': 1, 'min_volume': 50}},
     }
     path = tmp_path / 'config.json'
     path.write_text(json.dumps(cfg, ensure_ascii=False), encoding='utf-8')
@@ -95,6 +102,41 @@ def test_pages_respect_thresholds_and_balance(tmp_path):
     assert len(res['kept']) + len(res['infos']) + len(res['removed']) == len(KEYS)
 
 
+def test_tree_levels_follow_real_parents(tmp_path):
+    cfg = sc.load_config(make_niche(tmp_path))
+    pages = sc.build(cfg)['pages']
+    assert pages['Кавомашини (база)']['level'] == 1
+    model = pages["De'Longhi > Magnifica S"]
+    assert model['parent'] == "De'Longhi" and model['level'] == 3
+    for p in pages.values():
+        if p['parent'] in pages:
+            assert p['level'] == pages[p['parent']]['level'] + 1, p['page']
+
+
+def test_rel_label_drops_parent_and_merged_series():
+    assert sc.rel_label({'page': 'EcoFlow > Delta 2', 'parent': 'EcoFlow'}) == 'Delta 2'
+    assert sc.rel_label({'page': 'EcoFlow > Trail > Trail 300', 'parent': 'EcoFlow'}) == 'Trail 300'
+    assert sc.rel_label({'page': 'Для дому > 5 кВт', 'parent': 'База'}) == 'Для дому > 5 кВт'
+
+
+def test_default_tree_without_config_tree(tmp_path):
+    cfg = sc.load_config(make_niche(tmp_path))
+    assert cfg['_tree'][0] == ['Бренд', 'Серія?', 'Модель']
+    assert ['Призначення', 'Тип'] in cfg['_tree'] and ['Потужність'] in cfg['_tree']
+
+
+def test_articles_and_commercial_override(tmp_path):
+    cfg = sc.load_config(make_niche(tmp_path))
+    res = sc.build(cfg)
+    assert 'скільки коштує кавомашина' in res['kept']          # «скільки» - інфо-маркер, але це ціна
+    arts = res['articles']
+    assert arts['Як вибрати кавомашину']['level'] == 2
+    assert res['article_of']['як вибрати кавомашину delonghi'] == "Як вибрати кавомашину > De'Longhi"
+    split = arts["Як вибрати кавомашину > De'Longhi"]
+    assert split['level'] == 3 and split['parent'] == 'Як вибрати кавомашину' and split['url'].startswith('/blog/')
+    assert res['article_of']['як чистити кавомашину'] == 'Догляд' and arts['Догляд']['url'] == '/blog/doglyad/'
+
+
 def test_serp_merge_moves_keys_to_parent(tmp_path):
     cfg = sc.load_config(make_niche(tmp_path))
     serp = {'pages': {'Для офісу': {'decision': 'merge', 'overlap': 6, 'head': 'кавомашина для офісу', 'parent': 'Кавомашини (база)'}}}
@@ -106,17 +148,25 @@ def test_serp_merge_moves_keys_to_parent(tmp_path):
 
 def test_xlsx_and_pages_json(tmp_path):
     cfg_path = make_niche(tmp_path)
+    comp = {'competitors': [{'competitor': 'shop.ua', 'category_url': 'https://shop.ua/kavomashyny/', 'types': {'фільтр': 1},
+                             'pages': [{'url': 'https://shop.ua/kavomashyny/delonghi/', 'type': 'фільтр', 'label': 'DeLonghi',
+                                        'keywords': 40}]}],
+            'facets': [['delonghi', 2, 40, ['DeLonghi']]]}
+    (tmp_path / 'competitors.json').write_text(json.dumps(comp, ensure_ascii=False), encoding='utf-8')
     out = tmp_path / 'core.xlsx'
     env = dict(os.environ, PYTHONIOENCODING='utf-8')
     r = subprocess.run([sys.executable, os.path.join(ROOT, 'scripts', 'semantic_core.py'), cfg_path, '--out', str(out)],
                        capture_output=True, text=True, encoding='utf-8', env=env, cwd=ROOT)
     assert r.returncode == 0, r.stderr
     wb = openpyxl.load_workbook(out)
-    assert wb.sheetnames == ['Кластери', 'Структура', 'Інфо', 'Видалено', 'Зведення']
+    assert wb.sheetnames == ['Кластери', 'Структура', 'Статті', 'Інфо', 'Видалено', 'Конкуренти', 'Зведення']
     header = [c.value for c in wb['Кластери'][1]]
-    assert header[:6] == ['Keyword', 'Volume', 'Group', 'URL', 'Інтент', 'Коментар'] and 'Модель' in header
+    assert header[:7] == ['Keyword', 'Volume', 'Group', 'URL', 'Рівень', 'Інтент', 'Коментар']
+    assert 'Рівень 2' in header and 'Модель' in header
+    assert 'DeLonghi (40)' in [c.value for c in wb['Конкуренти']['F']]
     data = json.loads((tmp_path / 'core.pages.json').read_text(encoding='utf-8'))
     assert {p['kind'] for p in data['pages']} >= {'base', 'brand', 'model'}
+    assert any(a['page'] == 'Догляд' for a in data['articles'])
 
 
 def test_serp_decision_rules():
