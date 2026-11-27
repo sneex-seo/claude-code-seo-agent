@@ -52,6 +52,10 @@
   "min_keys": 3,
   "min_volume": 50
  },
+ "output": {
+  "split_lang": true,
+  "neutral_lang": "uk"
+ },
  "numeric_limits": [
   {
    "facet": "Потужність",

@@ -26,7 +26,7 @@ KEYS = [
     ('як вибрати кавомашину', 700), ('ремонт кавомашини', 500), ('кавомашина київ', 400),
     ('кавомашина для дому з капучинатором', 120),
     ('як вибрати кавомашину delonghi', 200), ('як чистити кавомашину', 250), ('як чистити кавомашину delonghi', 120),
-    ('скільки коштує кавомашина', 300),
+    ('скільки коштує кавомашина', 300), ('кофемашина для дома купить', 60),
 ]
 
 
@@ -159,11 +159,20 @@ def test_xlsx_and_pages_json(tmp_path):
                        capture_output=True, text=True, encoding='utf-8', env=env, cwd=ROOT)
     assert r.returncode == 0, r.stderr
     wb = openpyxl.load_workbook(out)
-    assert wb.sheetnames == ['Кластери', 'Структура', 'Статті', 'Інфо', 'Видалено', 'Конкуренти', 'Зведення']
-    header = [c.value for c in wb['Кластери'][1]]
-    assert header[:7] == ['Keyword', 'Volume', 'Group', 'URL', 'Рівень', 'Інтент', 'Коментар']
-    assert 'Рівень 2' in header and 'Модель' in header
+    assert wb.sheetnames == ['Зведення', 'UA', 'RU', 'Структура', 'Блог', 'Статті', 'Видалено', 'Конкуренти']
+    header = [c.value for c in wb['UA'][1]]
+    assert header == ['Категорія', 'Keyword', 'Volume', 'Intent', 'Group 1', 'Group 2', 'Group 3', 'URL', 'Source', 'Коментар']
+    rows = {r[1]: r for r in wb['UA'].iter_rows(min_row=2, values_only=True)}
+    assert rows['кавомашина делонги магнифика s'][4:7] == ('Кавомашини', "Бренд - De'Longhi", 'Модель - Magnifica S')
+    assert rows['кавомашина делонги магнифика s'][7] == '/kavomashyny/delonghi/magnifica-s/'
+    assert rows['кавомашина'][4:7] == ('Кавомашини', None, None) and rows['кавомашина'][8] == 'сіди'
+    assert [r[1] for r in wb['RU'].iter_rows(min_row=2, values_only=True)] == ['кофемашина для дома купить']
+    blog = {r[1]: r for r in wb['Блог'].iter_rows(min_row=2, values_only=True)}
+    assert blog['як вибрати кавомашину delonghi'][4:7] == ('Кавомашини', 'Як вибрати кавомашину', "Бренд - De'Longhi")
     assert 'DeLonghi (40)' in [c.value for c in wb['Конкуренти']['F']]
+    import cluster_gaps  # аудит бази читає новий формат: база - рядки, де заповнено лише Group 1
+    base_keys = {k for k, _ in cluster_gaps.load(str(out), r'\(баз', False)}
+    assert 'кавомашина' in base_keys and 'кавомашина делонги магнифика s' not in base_keys
     data = json.loads((tmp_path / 'core.pages.json').read_text(encoding='utf-8'))
     assert {p['kind'] for p in data['pages']} >= {'base', 'brand', 'model'}
     assert any(a['page'] == 'Догляд' for a in data['articles'])
@@ -198,3 +207,27 @@ def test_ai_batches_keep_pages_together():
     assert sum(len(kws) for b in bs for _, kws in b) == 20
     assert all(sum(len(kws) for _, kws in b) <= 6 for b in bs)
     assert '## A' in ai_review.batch_text(bs[0])
+
+
+def test_one_sheet_with_language_column(tmp_path):
+    cfg = sc.load_config(make_niche(tmp_path))
+    cfg['output'] = {'split_lang': False, 'site': 'https://shop.ua'}
+    out = tmp_path / 'one.xlsx'
+    sc.write_outputs(cfg, sc.build(cfg), str(out))
+    wb = openpyxl.load_workbook(out)
+    assert 'Кластери' in wb.sheetnames and 'UA' not in wb.sheetnames
+    header = [c.value for c in wb['Кластери'][1]]
+    assert header[-2:] == ['Мова', 'Коментар']
+    rows = {r[1]: r for r in wb['Кластери'].iter_rows(min_row=2, values_only=True)}
+    assert rows['кофемашина для дома купить'][header.index('Мова')] == 'ru'
+    assert rows['кавомашина'][header.index('URL')] == 'https://shop.ua/kavomashyny/'
+
+
+def test_key_lang_and_step_label():
+    assert sc.key_lang('зарядна станція') == 'uk' and sc.key_lang('як вибрати кавомашину') == 'uk'
+    assert sc.key_lang('купить зарядную станцию') == 'ru' and sc.key_lang('зарядная станция') == 'ru'
+    assert sc.key_lang('ecoflow delta 2') == ''
+    assert sc.step_label([('Бренд', 'EcoFlow')]) == 'Бренд - EcoFlow'
+    assert sc.step_label([('Серія', 'Trail'), ('Модель', 'Trail 300')]) == 'Модель - Trail 300'
+    assert sc.step_label([('Призначення', 'Для дому'), ('Потужність', '5 кВт')]) == 'Призначення - Для дому, Потужність - 5 кВт'
+    assert sc.step_label([('Тема', 'Як вибрати')]) == 'Як вибрати'

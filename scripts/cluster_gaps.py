@@ -6,7 +6,7 @@
 списках брендов/фасонов/атрибутов. Домен-агностично: для одежды всплывут бренды/фасоны,
 для электроники - samsung/xiaomi/ips/дюйми/пам'ять и т.п. Добавь их в списки и перекластеризуй.
 
-  python scripts/cluster_gaps.py clustered.xlsx              # авто: строки Group ~ "база/загальн"
+  python scripts/cluster_gaps.py clustered.xlsx              # авто: аркуші UA/RU - рядки лише з Group 1; старий формат - Group ~ "база/загальн"
   python scripts/cluster_gaps.py clustered.xlsx --base "(база)"
   python scripts/cluster_gaps.py keys.csv --all              # весь файл как множество для скана
 """
@@ -26,22 +26,27 @@ def load(path, base_pat, use_all):
     if ext in ('.xlsx', '.xlsm'):
         import openpyxl
         wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
-        ws = wb['Кластери'] if 'Кластери' in wb.sheetnames else (
-             wb['Кластеры'] if 'Кластеры' in wb.sheetnames else wb.worksheets[0])
-        it = ws.iter_rows(values_only=True)
-        header = [str(h or '').strip().lower() for h in next(it)]
-        ki = header.index('keyword') if 'keyword' in header else 0
-        vi = header.index('volume') if 'volume' in header else 1
-        gi = header.index('group') if 'group' in header else None
+        # semantic_core.py: аркуші UA і RU (або «Кластери») плоскою таблицею з Group 1..N; старі файли - «Кластери» з Group
+        names = [n for n in ('Кластери', 'Кластеры', 'UA', 'RU') if n in wb.sheetnames] or [wb.worksheets[0].title]
         rx = re.compile(base_pat, re.I)
-        for r in it:
-            if not r or len(r) <= ki or r[ki] is None or str(r[ki]).startswith('▸'):
-                continue
-            g = str(r[gi]) if (gi is not None and len(r) > gi and r[gi]) else ''
-            if not use_all and gi is not None and not rx.search(g):
-                continue
-            v = r[vi] if (len(r) > vi and isinstance(r[vi], (int, float))) else 0
-            out.append((norm(r[ki]), int(v)))
+        for name in names:
+            it = wb[name].iter_rows(values_only=True)
+            header = [str(h or '').strip().lower() for h in next(it)]
+            ki = header.index('keyword') if 'keyword' in header else 0
+            vi = header.index('volume') if 'volume' in header else 1
+            gi = header.index('group') if 'group' in header else None
+            g2 = header.index('group 2') if 'group 2' in header else None  # база = заповнено лише Group 1
+            for r in it:
+                if not r or len(r) <= ki or r[ki] is None or str(r[ki]).startswith('▸'):
+                    continue
+                if not use_all:
+                    if g2 is not None:
+                        if len(r) > g2 and r[g2]:
+                            continue
+                    elif gi is not None and not rx.search(str(r[gi]) if (len(r) > gi and r[gi]) else ''):
+                        continue
+                v = r[vi] if (len(r) > vi and isinstance(r[vi], (int, float))) else 0
+                out.append((norm(r[ki]), int(v)))
     else:
         for r in csv.DictReader(open(path, encoding='utf-8-sig')):
             kw = r.get('keyword') or r.get('Keyword') or next(iter(r.values()))
@@ -52,7 +57,7 @@ def load(path, base_pat, use_all):
 
 def main():
     ap = argparse.ArgumentParser(description='Аудит catch-all кластера: пропущені бренди й атрибути')
-    ap.add_argument('path', help='кластеризований xlsx (аркуш «Кластери») або csv ключів')
+    ap.add_argument('path', help='кластеризований xlsx (аркуші UA і RU або «Кластери») або csv ключів')
     ap.add_argument('--base', default=r'\(баз|загальна категор|catch|general|\bбаза\b', help='regex catch-all кластера в Group (за замовчуванням ловить «... (база)» і «загальна категорія», але НЕ справжні фасети на кшталт «Загальна > Панами»)')
     ap.add_argument('--all', action='store_true', help='сканувати весь файл, а не лише базовий кластер')
     ap.add_argument('--top', type=int, default=30)

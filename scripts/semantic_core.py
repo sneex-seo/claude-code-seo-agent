@@ -40,6 +40,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LAT2CYR = str.maketrans("qwertyuiop[]asdfghjkl;'zxcvbnm,.", 'йцукенгшщзхїфівапролджєячсмитьбю')
 BASE_LEVEL = 1
 BRAND, SERIES, MODEL = 'Бренд', 'Серія', 'Модель'
+TOPIC = 'Тема'
+LANG_SHEETS = {'uk': 'UA', 'ru': 'RU'}
 TRANSLIT = str.maketrans({'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ie', 'ж': 'zh', 'з': 'z',
                           'и': 'y', 'і': 'i', 'ї': 'i', 'й': 'i', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p',
                           'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh',
@@ -186,15 +188,16 @@ def facet_value(f, name):
     return None
 
 
-def candidates(f, cfg):
-    """(сторінка, батьківська, url, рівень, вид) за ланцюжками дерева, від найглибшої до бази."""
+def candidates(f, cfg, steps=None):
+    """(сторінка, батьківська, url, рівень, вид) за ланцюжками дерева, від найглибшої до бази.
+    steps - словник, куди записати шлях сторінки ознаками: [(«Бренд», «EcoFlow»), («Серія», «Delta»)]."""
     cat = cfg['category_url']
     base = f"{cfg['base_name']} (база)"
     found = {}
     for ci, chain in enumerate(cfg['_tree']):
         if chain and chain[0].rstrip('?') == BRAND and f.get('override'):
             continue  # аксесуар не йде на сторінки бренду
-        names, slugs, parent, depth = [], [], base, 0
+        names, slugs, parent, depth, path = [], [], base, 0, []
         for step in chain:
             optional = step.endswith('?')
             facet = step.rstrip('?')
@@ -210,8 +213,11 @@ def candidates(f, cfg):
                 label = f'{facet} {v[0]}'  # «Потужність 2 кВт»: на першому рівні число без назви ознаки незрозуміле
             names.append(label)
             slugs.append(v[1])
+            path.append((facet, v[0]))
             depth += 1
             name = ' > '.join(names)
+            if steps is not None:
+                steps.setdefault(name, list(path))
             kind = 'brand' if (facet == BRAND and depth == 1) else ('model' if facet == MODEL else ('series' if facet == SERIES else 'facet'))
             if name not in found:
                 found[name] = (name, parent, cat + '/'.join(slugs) + '/', depth + 1, kind, ci)
@@ -247,7 +253,9 @@ def read_inputs(cfg):
     core, src = {}, defaultdict(set)
     for pattern in cfg['inputs']:
         for path in sorted(glob.glob(os.path.join(cfg['_dir'], pattern))):
-            tag = 'сіди' if os.path.basename(path).startswith('seed') else 'конкуренти'
+            fname = os.path.basename(path)
+            m = re.match(r'url_([^_]+)_', fname)
+            tag = 'сіди' if fname.startswith('seed') else (f'конкурент: {m.group(1)}' if m else os.path.splitext(fname)[0])
             for r in csv.DictReader(open(path, encoding='utf-8-sig')):
                 k = norm(r.get('keyword') or r.get('Keyword') or '')
                 if not k:
@@ -320,7 +328,7 @@ def rel_label(p):
     return p['page']
 
 
-def article_candidates(k, f, cfg):
+def article_candidates(k, f, cfg, steps=None):
     art = cfg['articles']
     topic = next((t for t in art.get('topics', []) if t['_rx'].search(k)), None)
     tname, tslug = (topic['name'], topic['slug']) if topic else ('Інше', 'inshe')
@@ -329,8 +337,46 @@ def article_candidates(k, f, cfg):
         v = facet_value(f, facet)
         if v:
             out.append((f'{tname} > {v[0]}', tname, f'/blog/{tslug}-{v[1]}/', 3, 'article'))
+            if steps is not None:
+                steps.setdefault(out[-1][0], [(TOPIC, tname), (facet, v[0])])
     out.append((tname, None, f'/blog/{tslug}/', 2, 'base'))  # тема статті лишається навіть малою
+    if steps is not None:
+        steps.setdefault(tname, [(TOPIC, tname)])
     return out
+
+
+def key_lang(k):
+    """Мова ключа: 'uk', 'ru' або '' (латиниця, бренд, модель - мову не визначити)."""
+    if re.search(r"[іїєґ']", k) or re.search(r'\b(як|що|де|або|ціна|ціни|купити|скільки|який|яка|яку)\b', k):
+        return 'uk'
+    if re.search(r'[ыэъё]', k) or re.search(r'\b(как|что|где|или|цена|цены|купить|сколько|какой|какая|какую|для дома)\b', k) \
+            or re.search(r'[а-я](ая|ое|ые|ую|ть|ться|ция|ции|ций)\b', k):
+        return 'ru'
+    return ''
+
+
+def step_label(own):
+    """Підпис рівня для колонок Group: «Бренд - EcoFlow»; тема статті - без назви ознаки."""
+    if len(own) == 2 and own[1][1].startswith(own[0][1]):
+        own = own[1:]  # «Серія - Trail, Модель - Trail 300» -> «Модель - Trail 300»
+    return ', '.join(v if f == TOPIC else f'{f} - {v}' for f, v in own)
+
+
+def group_parts(p, pages, base_name):
+    """Шлях сторінки в реальному дереві для колонок Group 1..N: категорія, далі кожен рівень своєю колонкою."""
+    chain, cur, seen = [], p, set()
+    while cur and cur['page'] not in seen:
+        seen.add(cur['page'])
+        if not (cur['kind'] == 'base' and cur['page'].endswith('(база)')):
+            chain.insert(0, cur)
+        cur = pages.get(cur['parent']) if cur.get('parent') else None
+    parts = [base_name]
+    for node in chain:
+        mine = node.get('steps', [])
+        par = pages.get(node.get('parent') or '', {}).get('steps', [])
+        own = mine[len(par):] if par and mine[:len(par)] == par else mine
+        parts.append(step_label(own) or node['page'])
+    return parts
 
 
 def build(cfg, serp=None):
@@ -357,7 +403,8 @@ def build(cfg, serp=None):
     dup_of = {keys[i]: h for i, h in dup.items()}
     merged = {g for g, d in (serp or {}).get('pages', {}).items() if d.get('decision') == 'merge'}
 
-    cands = {k: candidates(feats[k], cfg) for k in keys}
+    steps = {f"{cfg['base_name']} (база)": []}
+    cands = {k: candidates(feats[k], cfg, steps) for k in keys}
     chains_of = {}
     for cl in cands.values():
         for c in cl:
@@ -385,13 +432,19 @@ def build(cfg, serp=None):
     ikeys = sorted(infos, key=lambda k: -infos[k])
     idup = mark([[k, infos[k]] for k in ikeys], 0, 1, None) if ikeys else {}
     idup_of = {ikeys[i]: h for i, h in idup.items()}
-    acands = {k: article_candidates(k, feats[k], cfg) for k in ikeys}
+    asteps = {}
+    acands = {k: article_candidates(k, feats[k], cfg, asteps) for k in ikeys}
     aparents = {c[0]: c[1] for cl in acands.values() for c in cl}
     apage_of, ameta = assign(ikeys, acands, infos, idup_of, cfg['articles']['thresholds'], exempt=('base',)) if ikeys else ({}, {})
     articles = page_records(ikeys, apage_of, ameta, infos, idup_of, None, aparents) if ikeys else {}
+    for recs, st in ((info_page, steps), (articles, asteps)):
+        for g, p in recs.items():
+            p['steps'] = st.get(g, [])
+    for m in merged_info:
+        m['steps'] = steps.get(m['page'], [])
     return {'core': core, 'src': src, 'kept': kept, 'removed': removed, 'infos': infos, 'feats': feats,
             'dup_of': dup_of, 'pages': info_page, 'page_of': page_of, 'merged': merged, 'merged_pages': merged_info,
-            'articles': articles, 'article_of': apage_of}
+            'articles': articles, 'article_of': apage_of, 'info_dup_of': idup_of}
 
 
 def ai_status(cfg, res, ai_rows):
@@ -445,46 +498,59 @@ def competitors_summary(cfg):
 
 
 def write_outputs(cfg, res, out, serp=None, ai=None, articles_ex=None):
-    bold, fill = Font(bold=True), PatternFill('solid', fgColor='E8F0E8')
-    facet_cols = ([BRAND, SERIES, MODEL] + [n['name'] for n in cfg.get('numeric', [])] + [a['name'] for a in cfg.get('attributes', [])])
-
-    def facet_vals(f):
-        vals = [(facet_value(f, BRAND) or ('',))[0], (facet_value(f, SERIES) or ('',))[0], (facet_value(f, MODEL) or ('',))[0]]
-        vals += [(facet_value(f, n['name']) or ('',))[0] for n in cfg.get('numeric', [])]
-        vals += [(facet_value(f, a['name']) or ('',))[0] for a in cfg.get('attributes', [])]
-        return vals
+    head_font, head_fill = Font(bold=True, color='FFFFFF', name='Arial'), PatternFill('solid', fgColor='2F5597')
+    opts = cfg.get('output', {})
+    split = opts.get('split_lang', True)      # окремі аркуші UA і RU, як у робочому документі тімліда
+    neutral = opts.get('neutral_lang', 'uk')  # куди йдуть ключі без ознак мови: латиниця, бренди, моделі
+    site = opts.get('site', '').rstrip('/')   # домен клієнта: URL у таблиці стане повною адресою
+    category = cfg.get('name', '')
+    base_name = cfg['base_name']
 
     tree = tree_order(res['pages'])
-    max_level = max(p['level'] for p in tree)
-    level_cols = [f'Рівень {i}' for i in range(2, max_level + 1)]
+    atree = tree_order(res['articles'])
     intents = cfg.get('intent_rules', [])
     comments = cfg.get('comments', [])
     sp = (serp or {}).get('pages', {})
+    groups = {p['page']: group_parts(p, res['pages'], base_name) for p in tree}
+    agroups = {p['page']: group_parts(p, res['articles'], base_name) for p in atree}
+    n_group = max(len(g) for g in list(groups.values()) + list(agroups.values()) + [[base_name]])
+    group_cols = [f'Group {i}' for i in range(1, n_group + 1)]
 
-    def path_parts(p):
-        parts, cur = [], p
-        while cur and cur['kind'] != 'base':
-            parts.insert(0, rel_label(cur))
-            cur = res['pages'].get(cur['parent'])
-        return parts + [''] * (len(level_cols) - len(parts))
+    def note_of(k, dup_of):
+        note = [c['comment'] for c in comments if c['_rx'].search(k)]
+        if k in dup_of:
+            note.append(f'дубль «{dup_of[k]}», в ∑ не йде')
+        if ai and k in ai['flagged']:
+            note.append(ai['flagged'][k])
+        return '; '.join(note)
 
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = 'Кластери'
-    ws.append(['Keyword', 'Volume', 'Group', 'URL', 'Рівень', 'Інтент', 'Коментар'] + level_cols + facet_cols)
+    def flat_row(k, v, intent, parts, url, dup_of, extra=()):
+        return ([category, k, v, intent] + parts + [''] * (n_group - len(parts))
+                + [site + url if url else '', '; '.join(sorted(res['src'].get(k, ())))] + list(extra) + [note_of(k, dup_of)])
+
+    # Кластери плоскою таблицею: рядок = ключ, шлях сторінки - у колонках Group 1..N («Бренд - EcoFlow», «Серія - Delta»)
+    rows = defaultdict(list)
     for p in tree:
-        ws.append([f'▸ {p["page"]}', p['volume'], p['page'], 'створити: ' + p['url'], p['level'], '', f'ключів: {p["keys"]}'])
-        for c in ws[ws.max_row]:
-            c.font, c.fill = bold, fill
-        parts = path_parts(p)
         for k, v in p['keywords']:
-            note = [c['comment'] for c in comments if c['_rx'].search(k)]
-            if k in res['dup_of']:
-                note.append(f'дубль «{res["dup_of"][k]}», в ∑ не йде')
-            if ai and k in ai['flagged']:
-                note.append(ai['flagged'][k])
             intent = next((r['intent'] for r in intents if r['_rx'].search(k)), 'комерційний')
-            ws.append([k, v, p['page'], p['url'], p['level'], intent, '; '.join(note)] + parts + facet_vals(res['feats'][k]))
+            lang = key_lang(k) or neutral
+            if split:
+                rows[lang].append(flat_row(k, v, intent, groups[p['page']], p['url'], res['dup_of']))
+            else:
+                rows['all'].append(flat_row(k, v, intent, groups[p['page']], p['url'], res['dup_of'], (lang,)))
+    header = ['Категорія', 'Keyword', 'Volume', 'Intent'] + group_cols + ['URL', 'Source']
+    wb = openpyxl.Workbook()
+    ws_z = wb.active
+    ws_z.title = 'Зведення'
+    flat_sheets = []
+    for lang in (sorted(rows, key=lambda x: (x not in LANG_SHEETS, list(LANG_SHEETS).index(x) if x in LANG_SHEETS else 0, x))
+                 if split else ['all']):
+        name = LANG_SHEETS.get(lang, lang.upper()) if split else 'Кластери'
+        ws = wb.create_sheet(name)
+        ws.append(header + ([] if split else ['Мова']) + ['Коментар'])
+        for r in rows[lang]:
+            ws.append(r)
+        flat_sheets.append(name)
 
     ws_s = wb.create_sheet('Структура')
     ws_s.append(['Дерево', 'Рівень', 'Сторінка', 'Батьківська', 'URL', 'Ключів', '∑', 'Головний ключ', 'Перевірка видачі', 'Тип видачі'])
@@ -500,26 +566,29 @@ def write_outputs(cfg, res, out, serp=None, ai=None, articles_ex=None):
             check = 'не перевірено'
         rec = (d or {}).get('recommendation', '')
         indent = '    ' * (p['level'] - 1) + rel_label(p)
-        ws_s.append([indent, p['level'], p['page'], p['parent'] or '', p['url'], p['keys'], p['volume'], p['head'], check, rec])
+        ws_s.append([indent, p['level'], p['page'], p['parent'] or '', site + p['url'], p['keys'], p['volume'], p['head'], check, rec])
     for g, d in sp.items():
         if d['decision'] == 'merge':
             ws_s.append(['', '', g, d['parent'], '', 0, 0, d['head'], 'злито: ' + d.get('why', ''), d.get('recommendation', '')])
 
+    # Блог: інфо-запити тією самою плоскою таблицею, Group 2 - тема статті, Group 3 - її поділ
+    ws_i = wb.create_sheet('Блог')
+    ws_i.append(header + ['Коментар'])
+    for p in atree:
+        for k, v in p['keywords']:
+            ws_i.append(flat_row(k, v, 'інформаційний', agroups[p['page']], p['url'], res['info_dup_of']))
+    flat_sheets.append('Блог')
+
     ws_a = wb.create_sheet('Статті')
     ws_a.append(['Тема статті', 'Рівень', 'Ключів', '∑', 'Головний ключ', 'Що у видачі', 'Приклади статей у видачі', 'Ключі'])
     ex = (articles_ex or {}).get('pages', {})
-    for p in tree_order(res['articles']):
+    for p in atree:
         e = ex.get(p['page'], {})
         examples = ' | '.join(f'{x["title"] or x["url"]} - {x["url"]}' for x in e.get('examples', []))
         what = ', '.join(f'{k} {v}' for k, v in sorted(e.get('profile', {}).items(), key=lambda x: -x[1]))
         ws_a.append([p['page'], p['level'], p['keys'], p['volume'], p['head'], what, examples,
                      ', '.join(k for k, _ in p['keywords'][:15])])
 
-    ws_i = wb.create_sheet('Інфо')
-    ws_i.append(['Keyword', 'Volume', 'Group', 'URL', 'Інтент', 'Коментар'])
-    for k, v in sorted(res['infos'].items(), key=lambda x: -x[1]):
-        g = res['article_of'].get(k, 'Інше')
-        ws_i.append([k, v, g, res['articles'].get(g, {}).get('url', ''), 'інформаційний', ''])
     ws_r = wb.create_sheet('Видалено')
     ws_r.append(['Keyword', 'Volume', 'Причина'])
     for k, v, why in sorted(res['removed'], key=lambda x: (x[2], -x[1])):
@@ -558,17 +627,20 @@ def write_outputs(cfg, res, out, serp=None, ai=None, articles_ex=None):
         ('Конкуренти', ', '.join(r['competitor'] for r in comp['competitors']) if comp else 'не аналізувались'),
         ('Причини видалення', '; '.join(f'{k}: {v}' for k, v in rem_by.most_common())),
     ]
-    ws_z = wb.create_sheet('Зведення')
+    if split:
+        summary.insert(3, ('Мови', ', '.join(f'{LANG_SHEETS.get(lg, lg.upper())} - {len(r)} ключів' for lg, r in rows.items())
+                           + f' (без ознак мови - на аркуші {LANG_SHEETS.get(neutral, neutral.upper())})'))
     ws_z.append(['Параметр', 'Значення'])
     for a, b in summary:
         ws_z.append([a, b])
 
-    widths = {'Кластери': (46, 10, 34, 44, 8, 14, 40), 'Структура': (40, 8, 36, 30, 44, 8, 10, 40, 40, 24),
-              'Статті': (40, 8, 8, 10, 40, 30, 90, 80), 'Інфо': (46, 10, 34, 30, 14, 20), 'Видалено': (46, 10, 50),
+    flat_w = (16, 46, 9, 13) + (30,) * n_group + (44, 26, 50)
+    widths = {**{n: flat_w for n in flat_sheets}, 'Структура': (40, 8, 36, 30, 44, 8, 10, 40, 40, 24),
+              'Статті': (40, 8, 8, 10, 40, 30, 90, 80), 'Видалено': (46, 10, 50),
               'Конкуренти': (22, 50, 12, 12, 10, 90), 'Зведення': (28, 90)}
     for w in wb.worksheets:
         for c in w[1]:
-            c.font = bold
+            c.font, c.fill = head_font, head_fill
         w.freeze_panes = 'A2'
         if w.title != 'Конкуренти':
             w.auto_filter.ref = w.dimensions
