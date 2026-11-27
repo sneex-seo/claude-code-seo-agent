@@ -24,6 +24,14 @@ FILTER_MARK = re.compile(r'(\w+=\w|;|:|/filter/|/f/|/brand[-_/]|/producer|/proiz
                          r'/type[-_:]|/moshch|/potuzhn|/power)', re.I)
 
 
+EXCLUDED_HOSTS = re.compile(r'(\.ru|\.su|\.рф|\.xn--p1ai|\.by)$|russia|yandex|(^|\.)dzen\.|(^|\.)vk\.com$|(^|\.)ok\.ru$|rutube', re.I)
+
+
+def excluded_host(host):
+    """Російські й білоруські сайти та РФ-платформи: у приклади й рекомендації не беремо (див. geo_exclude)."""
+    return bool(EXCLUDED_HOSTS.search(host))
+
+
 def host_of(url):
     h = urlparse(url).netloc.lower()
     return h[4:] if h.startswith('www.') else h

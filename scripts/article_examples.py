@@ -23,7 +23,7 @@ import requests
 
 sys.stdout.reconfigure(encoding='utf-8')
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from page_types import classify, host_of, serp_profile  # noqa: E402
+from page_types import classify, excluded_host, host_of, serp_profile  # noqa: E402
 from serp_check import EST_USD, Serp, cache_path, lang_of  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,8 +51,8 @@ def page_title(url):
 
 
 def pick_examples(items, n):
-    """До n текстових сторінок з топу: спершу конкуренти, далі решта за позицією."""
-    texts = [x for x in items if x['type'] in TEXT_TYPES]
+    """До n текстових сторінок з топу: спершу конкуренти, далі решта за позицією. Російські сайти не беремо."""
+    texts = [x for x in items if x['type'] in TEXT_TYPES and not excluded_host(x['host'])]
     picked = [x for x in texts if x['competitor']][:n]
     return picked + [x for x in texts if x not in picked][:n - len(picked)]
 

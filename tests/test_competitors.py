@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 
 import article_examples  # noqa: E402
 import competitors as cp  # noqa: E402
-from page_types import classify, serp_profile  # noqa: E402
+from page_types import classify, excluded_host, serp_profile  # noqa: E402
 
 CAT = 'https://shop.ua/ua/catalog/zaryadni-stantsii/'
 
@@ -74,4 +74,9 @@ def test_article_examples_prefer_competitors():
              {'pos': 3, 'type': 'стаття', 'competitor': True, 'url': 'c'},
              {'pos': 4, 'type': 'відео', 'competitor': False, 'url': 'd'},
              {'pos': 5, 'type': 'форум', 'competitor': False, 'url': 'e'}]
+    for x in items:
+        x['host'] = 'shop.ua'
     assert [x['url'] for x in article_examples.pick_examples(items, 2)] == ['c', 'a']
+    items[0]['host'] = 'ecoflow-russia.com'  # російські сайти в приклади не йдуть
+    assert [x['url'] for x in article_examples.pick_examples(items, 2)] == ['c', 'e']
+    assert excluded_host('site.ru') and excluded_host('dzen.ru') and not excluded_host('ru.wikihow.com') and not excluded_host('prom.ua')
